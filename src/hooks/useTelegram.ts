@@ -18,6 +18,8 @@ export function useTelegram() {
   const [webApp, setWebApp] = useState<any>(null);
 
   useEffect(() => {
+    let backButtonCallback: (() => void) | null = null;
+
     const initTelegram = () => {
       if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
         const tgWebApp = window.Telegram.WebApp;
@@ -46,13 +48,10 @@ export function useTelegram() {
 
         // Настраиваем кнопку "Назад"
         tgWebApp.BackButton.show();
-        tgWebApp.BackButton.onClick(() => {
+        backButtonCallback = () => {
           window.history.back();
-        });
-
-        return () => {
-          tgWebApp.BackButton.offClick();
         };
+        tgWebApp.BackButton.onClick(backButtonCallback);
       } else {
         // Если не в Telegram, просто завершаем загрузку
         setIsLoading(false);
@@ -60,6 +59,13 @@ export function useTelegram() {
     };
 
     initTelegram();
+
+    // Cleanup function
+    return () => {
+      if (backButtonCallback && window.Telegram?.WebApp) {
+        window.Telegram.WebApp.BackButton.offClick(backButtonCallback);
+      }
+    };
   }, []);
 
   const syncUserWithSupabase = async (tgUser: TelegramUser) => {
