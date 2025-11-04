@@ -19,8 +19,8 @@ export function useTelegram() {
   const [webApp, setWebApp] = useState<any>(null);
 
   useEffect(() => {
-    // Инициализируем SDK
-    init({ debug: true });
+    // Инициализируем SDK без debug параметра
+    init();
     viewport.expand();
     viewport.bindCssVars();
 
@@ -34,9 +34,9 @@ export function useTelegram() {
     if (tgUser) {
       setUser(tgUser);
       syncUserWithSupabase(tgUser);
+    } else {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
 
     // Настраиваем кнопку "Назад"
     backButton.show();
@@ -76,6 +76,8 @@ export function useTelegram() {
       }
     } catch (error) {
       console.error('Failed to sync user with Supabase:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
