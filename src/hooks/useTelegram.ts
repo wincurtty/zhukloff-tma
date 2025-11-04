@@ -1,15 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { init, initData, backButton, viewport } from '@telegram-apps/sdk';
 import { supabase } from '@/lib/supabase';
 
-// Типы для Telegram Web App
 interface TelegramUser {
   id: number;
   first_name: string;
   last_name?: string;
   username?: string;
   language_code?: string;
+  is_premium?: boolean;
 }
 
 export function useTelegram() {
@@ -19,34 +18,48 @@ export function useTelegram() {
   const [webApp, setWebApp] = useState<any>(null);
 
   useEffect(() => {
-    // Инициализируем SDK без debug параметра
-    init();
-    viewport.expand();
-    viewport.bindCssVars();
+    const initTelegram = () => {
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+        const tgWebApp = window.Telegram.WebApp;
+        setWebApp(tgWebApp);
 
-    // Сохраняем ссылку на WebApp для использования в других компонентах
-    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-      setWebApp(window.Telegram.WebApp);
-    }
+        // Инициализируем WebApp
+        tgWebApp.ready();
+        tgWebApp.expand();
 
-    // Получаем данные пользователя
-    const tgUser = initData?.user as TelegramUser;
-    if (tgUser) {
-      setUser(tgUser);
-      syncUserWithSupabase(tgUser);
-    } else {
-      setIsLoading(false);
-    }
+        // Получаем данные пользователя
+        const tgUser = tgWebApp.initDataUnsafe?.user;
+        if (tgUser && tgUser.id && tgUser.first_name) {
+          const userData: TelegramUser = {
+            id: tgUser.id,
+            first_name: tgUser.first_name,
+            last_name: tgUser.last_name,
+            username: tgUser.username,
+            language_code: tgUser.language_code,
+            is_premium: tgUser.is_premium,
+          };
+          setUser(userData);
+          syncUserWithSupabase(userData);
+        } else {
+          setIsLoading(false);
+        }
 
-    // Настраиваем кнопку "Назад"
-    backButton.show();
-    backButton.onClick(() => {
-      window.history.back();
-    });
+        // Настраиваем кнопку "Назад"
+        tgWebApp.BackButton.show();
+        tgWebApp.BackButton.onClick(() => {
+          window.history.back();
+        });
 
-    return () => {
-      backButton.offClick();
+        return () => {
+          tgWebApp.BackButton.offClick();
+        };
+      } else {
+        // Если не в Telegram, просто завершаем загрузку
+        setIsLoading(false);
+      }
     };
+
+    initTelegram();
   }, []);
 
   const syncUserWithSupabase = async (tgUser: TelegramUser) => {
@@ -65,7 +78,6 @@ export function useTelegram() {
       });
 
       if (response.ok) {
-        // Получаем профиль после синхронизации
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -94,7 +106,6 @@ export function useTelegram() {
     profile,
     webApp,
     isLoading,
-    openLink,
-    initData: initData 
+    openLink
   };
 }

@@ -10,20 +10,14 @@ declare global {
             last_name?: string;
             username?: string;
             language_code?: string;
+            is_premium?: boolean;
           };
           chat?: any;
         };
         version: string;
         platform: string;
         colorScheme: string;
-        themeParams: {
-          bg_color: string;
-          text_color: string;
-          hint_color: string;
-          link_color: string;
-          button_color: string;
-          button_text_color: string;
-        };
+        themeParams: any;
         isExpanded: boolean;
         viewportHeight: number;
         viewportStableHeight: number;
