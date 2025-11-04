@@ -12,7 +12,7 @@ interface UserStats {
 }
 
 export default function ProfilePage() {
-  const { user, profile } = useTelegram();
+  const { user, profile, openLink } = useTelegram();
   const [stats, setStats] = useState<UserStats>({
     totalOrders: 0,
     completedOrders: 0,
@@ -25,8 +25,11 @@ export default function ProfilePage() {
   useEffect(() => {
     if (profile?.id) {
       fetchProfileData();
+    } else if (!profile && !isLoading) {
+      // Если профиль не загружен, но загрузка завершена
+      setIsLoading(false);
     }
-  }, [profile?.id]);
+  }, [profile?.id, isLoading]);
 
   const fetchProfileData = async () => {
     try {
@@ -39,14 +42,14 @@ export default function ProfilePage() {
 
       if (error) throw error;
 
-      const totalOrders = orders.length;
-      const completedOrders = orders.filter(o => o.status === 'completed').length;
-      const activeOrders = orders.filter(o => 
+      const totalOrders = orders?.length || 0;
+      const completedOrders = orders?.filter(o => o.status === 'completed').length || 0;
+      const activeOrders = orders?.filter(o => 
         ['brief_received', 'in_progress', 'review'].includes(o.status)
-      ).length;
+      ).length || 0;
       const totalSpent = orders
-        .filter(o => o.budget && o.status === 'completed')
-        .reduce((sum, order) => sum + (order.budget || 0), 0);
+        ?.filter(o => o.budget && o.status === 'completed')
+        .reduce((sum, order) => sum + (order.budget || 0), 0) || 0;
 
       setStats({
         totalOrders,
@@ -55,7 +58,7 @@ export default function ProfilePage() {
         totalSpent,
       });
 
-      setRecentOrders(orders.slice(0, 3));
+      setRecentOrders(orders?.slice(0, 3) || []);
     } catch (error) {
       console.error('Error fetching profile data:', error);
     } finally {
@@ -112,17 +115,17 @@ export default function ProfilePage() {
 
       {/* User Info Card */}
       <div className="bg-card border border-border rounded-xl p-6 text-center">
-        <div className="w-16 h-16 bg-gradient-to-br from-gray-400 to-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">
+        <div className="w-16 h-16 bg-gradient-to-br from-gray-400 to-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl font-bold text-black">
           {user?.first_name?.[0]?.toUpperCase() || 'U'}
         </div>
         <h2 className="text-xl font-bold text-text-primary mb-1">
-          {user?.first_name} {user?.last_name}
+          {user?.first_name || 'Пользователь'} {user?.last_name || ''}
         </h2>
         {user?.username && (
           <p className="text-text-secondary mb-3">@{user.username}</p>
         )}
         <div className="text-xs text-text-subtle">
-          ID: {user?.id || 'Неизвестно'}
+          ID: {user?.id ? user.id.toString() : 'Неизвестно'}
         </div>
       </div>
 
@@ -236,7 +239,7 @@ export default function ProfilePage() {
           </Link>
 
           <button
-            onClick={() => window.Telegram.WebApp.openLink('https://t.me/zhukloff')}
+            onClick={() => openLink('https://t.me/zhukloff')}
             className="flex items-center justify-between p-3 border border-border rounded-lg hover:border-hover transition-colors group w-full"
           >
             <div className="flex items-center gap-3">
