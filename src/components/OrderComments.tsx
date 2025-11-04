@@ -117,19 +117,6 @@ export default function OrderComments({ orderId }: OrderCommentsProps) {
       
       setNewComment('');
       
-      // Уведомление о новом комментарии
-      await fetch('/api/telegram/comment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          order_id: orderId,
-          comment: newComment.trim(),
-          client_name: profile.first_name,
-        }),
-      });
-      
     } catch (error) {
       console.error('Error adding comment:', error);
       alert('Ошибка при отправке комментария');

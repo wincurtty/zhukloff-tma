@@ -1,9 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Временное решение для сборки
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-key'
+);
 
 // Типы для TypeScript
 export type Order = {
@@ -28,6 +32,21 @@ export type OrderStage = {
   order_index: number;
   created_at: string;
 };
+
+export type OrderComment = {
+  id: string;
+  order_id: string;
+  author_id: string;
+  content: string;
+  attachment_url: string | null;
+  is_internal: boolean;
+  created_at: string;
+  profiles?: {
+    first_name: string;
+    username: string;
+  };
+};
+
 export type PortfolioItem = {
   id: string;
   title: string;
@@ -44,17 +63,4 @@ export type PortfolioItem = {
   featured: boolean;
   order_index: number;
   created_at: string;
-};
-export type OrderComment = {
-  id: string;
-  order_id: string;
-  author_id: string;
-  content: string;
-  attachment_url: string | null;
-  is_internal: boolean;
-  created_at: string;
-  profiles?: {
-    first_name: string;
-    username: string;
-  };
 };
